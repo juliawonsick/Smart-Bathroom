@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBathroom – Aluno</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 200px; background: #1a2340; color: #fff; display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 16px 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .sidebar-logo-icon { width: 38px; height: 38px; background: #2563eb; border-radius: 8px; display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px; }
+  .sidebar-logo-text { font-size: 15px; font-weight: 700; }
+  .sidebar-logo-sub { font-size: 11px; color: #aab; margin-top: 1px; }
+  .sidebar-nav { padding: 16px 10px; flex: 1; }
+  .nav-item { padding: 10px 12px; border-radius: 8px; cursor:pointer;font-size:14px;font-weight:600;color:#dde;transition:background .2s;margin-bottom:4px; }
+  .nav-item.active,.nav-item:hover { background:rgba(255,255,255,.12); }
+  .sidebar-footer { padding: 16px 10px; }
+  .btn-logout { width:100%;padding:10px;background:rgba(255,255,255,.08);color:#dde;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:background .2s; }
+  .btn-logout:hover { background:rgba(255,255,255,.18); }
+
+  .main { flex:1;display:flex;flex-direction:column;overflow:hidden; }
+
+  .hero { background:linear-gradient(120deg,#1a3a8f 0%,#2563eb 60%,#38b6ff 100%);color:#fff;padding:36px 40px 32px;position:relative; }
+  .hero-badge { background:rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px; }
+  .hero-title { font-size:36px;font-weight:800;margin-bottom:6px; }
+  .hero-sub { font-size:14px;opacity:.85; }
+  .hero-bath { margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600; }
+  .hero-status { position:absolute;top:28px;right:32px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px; }
+  .dot { width:8px;height:8px;border-radius:50%;background:#4ade80; }
+
+  .stats { display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 40px 0; }
+  .stat-card { background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 6px rgba(0,0,0,.06); }
+  .stat-label { font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px; }
+  .stat-value { font-size:22px;font-weight:800;color:#1a2340; }
+
+  .content { padding:24px 40px 40px;flex:1;overflow-y:auto; }
+
+  .bathroom-selector { display:flex;gap:10px;margin-bottom:22px; }
+  .bathroom-tab { padding:10px 22px;border-radius:24px;border:2px solid #dde1ea;background:#fff;font-size:14px;font-weight:700;cursor:pointer;color:#555;transition:all .2s;display:flex;align-items:center;gap:8px; }
+  .bathroom-tab:hover { border-color:#2563eb;color:#2563eb; }
+  .bathroom-tab.active-masc { background:#e8f0fe;border-color:#2563eb;color:#1a3a8f; }
+  .bathroom-tab.active-fem  { background:#fce4ec;border-color:#e91e8c;color:#880e4f; }
+  .bathroom-tab .tab-icon { font-size:18px; }
+
+  .section-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px; }
+  .section-title { font-size:18px;font-weight:800;color:#1a2340; }
+  .section-sub { font-size:13px;color:#888;margin-bottom:18px; }
+  .badge-warn { background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700; }
+  .badge-ok   { background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700; }
+
+  .items-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px; }
+  .item-card { background:#fff;border-radius:14px;padding:22px 20px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1.5px solid #eee;position:relative; }
+  .item-card.missing { background:#fffbf0;border-color:#ffd54f; }
+  .item-card.ok      { background:#f0fff4;border-color:#86efac; }
+  .item-dot { width:10px;height:10px;border-radius:50%;position:absolute;top:16px;right:16px; }
+  .item-dot.missing { background:#f59e0b; }
+  .item-dot.ok      { background:#22c55e; }
+  .item-emoji  { font-size:28px;margin-bottom:12px; }
+  .item-name   { font-size:13px;color:#666;margin-bottom:4px; }
+  .item-status { font-size:18px;font-weight:800; }
+  .item-status.missing { color:#d97706; }
+  .item-status.ok      { color:#16a34a; }
+
+  .report-card { background:#fff;border-radius:14px;padding:24px 28px;box-shadow:0 1px 6px rgba(0,0,0,.06); }
+  .report-title { font-size:17px;font-weight:800;color:#1a2340;margin-bottom:6px; }
+  .report-sub   { font-size:13px;color:#888;margin-bottom:18px; }
+  .btn-row { display:flex;gap:12px;flex-wrap:wrap; }
+  .btn-report { padding:10px 22px;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;transition:background .2s; }
+  .btn-report:hover { background:#1a4fc7; }
+  .alert-msg { margin-top:14px;font-size:13px;font-weight:600;color:#16a34a;display:none; }
+  .alert-msg.err { color:#dc2626; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">SB</div>
+    <div>
+      <div class="sidebar-logo-text">SmartBathroom</div>
+      <div class="sidebar-logo-sub">Aluno • {{ user_name }}</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active">Dashboard</div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="window.location.href='/logout'">Sair</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="hero">
+    <div class="hero-badge">Smart Bathroom Monitoring</div>
+    <div class="hero-title">Olá, {{ user_name }}</div>
+    <div class="hero-sub">Consulte o status do banheiro e sinalize a falta de insumos.</div>
+    <div class="hero-bath">{% if 'Masculino' in bathroom %}🚹{% else %}🚺{% endif %} {{ bathroom }}</div>
+    <div class="hero-status"><div class="dot"></div> Online</div>
+  </div>
+
+  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card">
+      <div class="stat-label">Alertas abertos</div>
+      <div class="stat-value" id="open-count">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Itens em falta</div>
+      <div class="stat-value" id="items-missing">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Última atualização</div>
+      <div class="stat-value" id="last-update" style="font-size:13px;margin-top:4px">–</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Status dos itens</div>
+        <div class="section-sub">Visualize em tempo real a disponibilidade dos insumos.</div>
+      </div>
+      <div id="badge-global"></div>
+    </div>
+
+    <div class="items-grid">
+      <div class="item-card" id="card-ph">
+        <div class="item-dot" id="dot-ph"></div>
+        <div class="item-emoji">🧻</div>
+        <div class="item-name">Papel Higiênico</div>
+        <div class="item-status" id="status-ph">–</div>
+      </div>
+      <div class="item-card" id="card-sl">
+        <div class="item-dot" id="dot-sl"></div>
+        <div class="item-emoji">🧴</div>
+        <div class="item-name">Sabão Líquido</div>
+        <div class="item-status" id="status-sl">–</div>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <div class="report-title">Sinalizar falta de item</div>
+      <div class="report-sub">Informe a falta de algum insumo no banheiro selecionado.</div>
+      <div class="btn-row">
+        <button class="btn-report" onclick="report('Papel Higiênico')">Falta Papel Higiênico</button>
+        <button class="btn-report" onclick="report('Sabão Líquido')">Falta Sabão Líquido</button>
+      </div>
+      <div class="alert-msg" id="report-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEYS = {
+  'Papel Higiênico': ['card-ph','dot-ph','status-ph'],
+  'Sabão Líquido':   ['card-sl','dot-sl','status-sl']
+};
+
+async function loadStatus() {
+  const res  = await fetch('/api/aluno/status');
+  const data = await res.json();
+
+  document.getElementById('open-count').textContent    = data.open_count;
+  document.getElementById('items-missing').textContent = data.items_missing;
+  document.getElementById('last-update').textContent   = data.last_update;
+
+  const hasMissing = Object.values(data.status).some(v => v === 'Em falta');
+  document.getElementById('badge-global').innerHTML = hasMissing
+    ? '<span class="badge-warn">Reposição necessária</span>'
+    : '<span class="badge-ok">Tudo disponível</span>';
+
+  for (const [item, [cardId, dotId, statusId]] of Object.entries(KEYS)) {
+    const missing = data.status[item] === 'Em falta';
+    document.getElementById(cardId).className = 'item-card '  + (missing ? 'missing' : 'ok');
+    document.getElementById(dotId).className  = 'item-dot '   + (missing ? 'missing' : 'ok');
+    const s = document.getElementById(statusId);
+    s.className   = 'item-status ' + (missing ? 'missing' : 'ok');
+    s.textContent = data.status[item];
+  }
+}
+
+async function report(item) {
+  const msg = document.getElementById('report-msg');
+  const res  = await fetch('/api/aluno/report', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({item})
+  });
+  const data = await res.json();
+  msg.className   = 'alert-msg' + (data.ok ? '' : ' err');
+  msg.textContent = data.ok ? `✓ Alerta enviado: ${item}.` : data.msg;
+  msg.style.display = 'block';
+  loadStatus();
+  setTimeout(() => msg.style.display = 'none', 5000);
+}
+
+loadStatus();
+setInterval(loadStatus, 8000);
+</script>
+</body>
+</html>
