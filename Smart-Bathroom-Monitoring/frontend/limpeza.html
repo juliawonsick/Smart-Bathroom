@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBathroom – Limpeza</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 180px; background: #1a2340; color: #fff; display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 14px 18px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .sidebar-logo-icon { width: 36px; height: 36px; background: #2563eb; border-radius: 8px; display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px; }
+  .sidebar-logo-text { font-size: 14px; font-weight: 700; }
+  .sidebar-logo-sub  { font-size: 10px; color: #aab; margin-top: 1px; }
+  .sidebar-nav { padding: 14px 8px; flex: 1; }
+  .nav-item { padding: 9px 10px; border-radius: 8px; cursor:pointer;font-size:13px;font-weight:600;color:#dde;transition:background .2s;margin-bottom:3px; }
+  .nav-item.active,.nav-item:hover { background:rgba(255,255,255,.12); }
+  .sidebar-footer { padding: 12px 8px; }
+  .btn-logout { width:100%;padding:9px;background:rgba(255,255,255,.08);color:#dde;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:background .2s; }
+  .btn-logout:hover { background:rgba(255,255,255,.18); }
+
+  .main { flex:1;display:flex;flex-direction:column;overflow:hidden; }
+
+  .hero { background:linear-gradient(120deg,#1a3a8f 0%,#2563eb 60%,#38b6ff 100%);color:#fff;padding:28px 36px 24px;position:relative; }
+  .hero-badge { background:rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px; }
+  .hero-title { font-size:28px;font-weight:800;margin-bottom:4px; }
+  .hero-sub   { font-size:13px;opacity:.85; }
+  .hero-status { position:absolute;top:22px;right:28px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px; }
+  .dot { width:8px;height:8px;border-radius:50%;background:#4ade80; }
+  .hero-summary { display:flex;gap:12px;margin-top:16px;flex-wrap:wrap; }
+  .hero-badge-bath { background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px; }
+  .hero-badge-bath.has-alert { background:rgba(255,180,0,.25);border-color:rgba(255,200,50,.5); }
+  .badge-num { background:rgba(255,255,255,.3);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:800; }
+
+  .stats { display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 36px 0; }
+  .stat-card { background:#fff;border-radius:12px;padding:15px 18px;box-shadow:0 1px 6px rgba(0,0,0,.06); }
+  .stat-label { font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px; }
+  .stat-value { font-size:20px;font-weight:800;color:#1a2340; }
+
+  .content { padding:20px 36px 36px;flex:1;overflow-y:auto; }
+
+  .bathroom-selector { display:flex;gap:10px;margin-bottom:22px; }
+  .bathroom-tab { padding:10px 20px;border-radius:24px;border:2px solid #dde1ea;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#555;transition:all .2s;display:flex;align-items:center;gap:8px; }
+  .bathroom-tab:hover { border-color:#2563eb;color:#2563eb; }
+  .bathroom-tab.active-masc { background:#e8f0fe;border-color:#2563eb;color:#1a3a8f; }
+  .bathroom-tab.active-fem  { background:#fce4ec;border-color:#e91e8c;color:#880e4f; }
+  .bathroom-tab .tab-icon { font-size:16px; }
+  .tab-alert-dot { width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-left:2px; }
+
+  .section-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px; }
+  .section-title { font-size:17px;font-weight:800;color:#1a2340; }
+  .section-sub   { font-size:12px;color:#888;margin-bottom:14px; }
+  .badge-warn { background:#fff3e0;color:#e65100;border:1px solid #ffcc80;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700; }
+  .badge-ok   { background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700; }
+
+  .items-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px; }
+  .item-card { background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 1px 6px rgba(0,0,0,.06);border:1.5px solid #eee;position:relative; }
+  .item-card.missing { background:#fffbf0;border-color:#ffd54f; }
+  .item-card.ok      { background:#f0fff4;border-color:#86efac; }
+  .item-dot { width:9px;height:9px;border-radius:50%;position:absolute;top:13px;right:13px; }
+  .item-dot.missing { background:#f59e0b; }
+  .item-dot.ok      { background:#22c55e; }
+  .item-emoji  { font-size:24px;margin-bottom:10px; }
+  .item-name   { font-size:12px;color:#666;margin-bottom:3px; }
+  .item-status { font-size:16px;font-weight:800; }
+  .item-status.missing { color:#d97706; }
+  .item-status.ok      { color:#16a34a; }
+
+  .clean-panel { background:#fff;border-radius:14px;padding:22px 24px;box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:20px; }
+  .clean-panel-title { font-size:15px;font-weight:800;color:#1a2340;margin-bottom:6px; }
+  .clean-panel-sub   { font-size:12px;color:#888;margin-bottom:14px; }
+  .btn-clean { width:100%;padding:12px;background:#22c55e;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;transition:background .2s; }
+  .btn-clean:hover { background:#16a34a; }
+  .clean-msg { margin-top:12px;font-size:12px;font-weight:600;color:#16a34a;display:none; }
+
+  .alert-entry { border:1px solid #f0f0f0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fafafa;display:flex;align-items:flex-start;justify-content:space-between;gap:12px; }
+  .alert-entry.aberto    { border-left:4px solid #f59e0b;background:#fffbf0; }
+  .alert-entry.resolvido { border-left:4px solid #22c55e;background:#f0fff4;opacity:.75; }
+  .alert-info { flex:1; }
+  .alert-item   { font-size:14px;font-weight:800;color:#1a2340;margin-bottom:3px; }
+  .alert-meta   { font-size:12px;color:#888;margin-bottom:2px; }
+  .alert-origin { font-size:12px;color:#555;font-weight:600;margin-bottom:4px; }
+  .alert-badge  { font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;display:inline-block; }
+  .alert-badge.aberto    { background:#fff3e0;color:#e65100; }
+  .alert-badge.resolvido { background:#e8f5e9;color:#16a34a; }
+  .btn-resolve { padding:7px 16px;background:#22c55e;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;transition:background .2s; }
+  .btn-resolve:hover { background:#16a34a; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">SB</div>
+    <div>
+      <div class="sidebar-logo-text">SmartBathroom</div>
+      <div class="sidebar-logo-sub">Limpeza</div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active">Dashboard</div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="window.location.href='/logout'">Sair</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="hero">
+    <div class="hero-badge">Smart Bathroom Monitoring</div>
+    <div class="hero-title">Olá, {{ user_name }}</div>
+    <div class="hero-sub">Acompanhe alertas, registre reposições e gerencie as ocorrências.</div>
+    <div class="hero-status"><div class="dot"></div> Online</div>
+    <div class="hero-summary" id="hero-summary"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Banheiro selecionado</div>
+      <div class="stat-value" id="stat-bathroom" style="font-size:12px;margin-top:4px">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Alertas abertos</div>
+      <div class="stat-value" id="open-count">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Itens em falta</div>
+      <div class="stat-value" id="items-missing">–</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Última atualização</div>
+      <div class="stat-value" id="last-update" style="font-size:11px;margin-top:4px">–</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="bathroom-selector" id="bathroom-tabs"></div>
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">Status dos itens</div>
+        <div class="section-sub">Visualize em tempo real a disponibilidade dos insumos.</div>
+      </div>
+      <div id="badge-global"></div>
+    </div>
+    <div class="items-grid">
+      <div class="item-card" id="card-ph">
+        <div class="item-dot" id="dot-ph"></div>
+        <div class="item-emoji">🧻</div>
+        <div class="item-name">Papel Higiênico</div>
+        <div class="item-status" id="status-ph">–</div>
+      </div>
+      <div class="item-card" id="card-sl">
+        <div class="item-dot" id="dot-sl"></div>
+        <div class="item-emoji">🧴</div>
+        <div class="item-name">Sabão Líquido</div>
+        <div class="item-status" id="status-sl">–</div>
+      </div>
+    </div>
+
+    <div class="clean-panel">
+      <div class="clean-panel-title">Equipe de limpeza</div>
+      <div class="clean-panel-sub">Após realizar a reposição dos itens, marque o banheiro como realizado. Isso resolve todos os alertas abertos deste banheiro.</div>
+      <button class="btn-clean" onclick="markCleaning()">✓ Marcar como realizado</button>
+      <div class="clean-msg" id="clean-msg"></div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:4px">Histórico de alertas</div>
+    <div class="section-sub">Alertas registrados por alunos ou sensores do sistema.</div>
+    <div id="alerts-list"></div>
+  </div>
+</div>
+
+<script>
+const KEYS = {
+  'Papel Higiênico': ['card-ph','dot-ph','status-ph'],
+  'Sabão Líquido':   ['card-sl','dot-sl','status-sl']
+};
+
+let currentBathroom = '';
+let allBathrooms    = [];
+let summaryData     = {};
+
+function isMasc(name) { return name.toLowerCase().includes('masculino'); }
+
+function renderTabs() {
+  const el = document.getElementById('bathroom-tabs');
+  el.innerHTML = allBathrooms.map(b => {
+    const masc = isMasc(b);
+    const cls  = b === currentBathroom ? (masc ? 'active-masc' : 'active-fem') : '';
+    const icon = masc ? '🚹' : '🚺';
+    const cnt  = summaryData[b] || 0;
+    const alertDot = cnt > 0 ? '<span class="tab-alert-dot"></span>' : '';
+    return `<button class="bathroom-tab ${cls}" onclick="switchBathroom('${b}')">`
+      + `<span class="tab-icon">${icon}</span>${b}${alertDot}</button>`;
+  }).join('');
+}
+
+function renderHeroSummary() {
+  const el = document.getElementById('hero-summary');
+  el.innerHTML = allBathrooms.map(b => {
+    const cnt  = summaryData[b] || 0;
+    const icon = isMasc(b) ? '🚹' : '🚺';
+    const cls  = cnt > 0 ? 'has-alert' : '';
+    return `<div class="hero-badge-bath ${cls}">${icon} ${b} <span class="badge-num">${cnt}</span></div>`;
+  }).join('');
+}
+
+function switchBathroom(b) {
+  currentBathroom = b;
+  renderTabs();
+  loadStatus();
+}
+
+async function loadStatus() {
+  const res  = await fetch('/api/limpeza/status?bathroom=' + encodeURIComponent(currentBathroom));
+  const data = await res.json();
+
+  if (!allBathrooms.length) {
+    allBathrooms    = data.bathrooms || [currentBathroom];
+    currentBathroom = currentBathroom || allBathrooms[0];
+  }
+  summaryData = data.summary || {};
+  renderTabs();
+  renderHeroSummary();
+
+  document.getElementById('stat-bathroom').textContent = currentBathroom;
+  document.getElementById('open-count').textContent    = data.open_count;
+  document.getElementById('items-missing').textContent = data.items_missing;
+  document.getElementById('last-update').textContent   = data.last_update;
+
+  const hasMissing = Object.values(data.status).some(v => v === 'Em falta');
+  document.getElementById('badge-global').innerHTML = hasMissing
+    ? '<span class="badge-warn">Reposição necessária</span>'
+    : '<span class="badge-ok">Tudo disponível</span>';
+
+  for (const [item, [cardId, dotId, statusId]] of Object.entries(KEYS)) {
+    const missing = data.status[item] === 'Em falta';
+    document.getElementById(cardId).className = 'item-card '  + (missing ? 'missing' : 'ok');
+    document.getElementById(dotId).className  = 'item-dot '   + (missing ? 'missing' : 'ok');
+    const s = document.getElementById(statusId);
+    s.className   = 'item-status ' + (missing ? 'missing' : 'ok');
+    s.textContent = data.status[item];
+  }
+
+  const list = document.getElementById('alerts-list');
+  if (!data.alerts || !data.alerts.length) {
+    list.innerHTML = '<div style="color:#888;font-size:13px;padding:10px 0">Nenhum alerta registrado ainda.</div>';
+    return;
+  }
+  list.innerHTML = data.alerts.map(a => `
+    <div class="alert-entry ${a.status}">
+      <div class="alert-info">
+        <div class="alert-item">${a.item}</div>
+        <div class="alert-meta">${a.bathroom}</div>
+        <div class="alert-origin">👤 Origem: ${a.origin_user || '—'}</div>
+        <div class="alert-meta">Criado em: ${a.created_at}${a.resolved_at ? ' &nbsp;•&nbsp; Resolvido: ' + a.resolved_at : ''}</div>
+        <span class="alert-badge ${a.status}">${a.status.toUpperCase()}</span>
+      </div>
+      ${a.status === 'aberto' ? `<button class="btn-resolve" id="btn-resolve-${a.id}" onclick="resolveAlert(${a.id})">Resolver</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function resolveAlert(id) {
+  const btn = document.getElementById('btn-resolve-' + id);
+  if (btn) { btn.disabled = true; btn.textContent = 'Aguarde...'; }
+  try {
+    const res  = await fetch('/api/limpeza/resolve', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      alert('Erro ao resolver: ' + (data.msg || 'Tente novamente.'));
+      if (btn) { btn.disabled = false; btn.textContent = 'Resolver'; }
+      return;
+    }
+  } catch (e) {
+    alert('Erro de conexão. Verifique o servidor.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Resolver'; }
+    return;
+  }
+  loadStatus();
+}
+
+async function markCleaning() {
+  const msg = document.getElementById('clean-msg');
+  await fetch('/api/limpeza/mark_cleaning', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({bathroom: currentBathroom})
+  });
+  msg.textContent   = `✓ ${currentBathroom} marcado como realizado! Todos os alertas foram encerrados.`;
+  msg.style.display = 'block';
+  loadStatus();
+  setTimeout(() => msg.style.display = 'none', 6000);
+}
+
+fetch('/api/limpeza/status').then(r => r.json()).then(d => {
+  allBathrooms    = d.bathrooms || [];
+  currentBathroom = allBathrooms[0] || '';
+  summaryData     = d.summary   || {};
+  renderTabs();
+  renderHeroSummary();
+  loadStatus();
+});
+setInterval(loadStatus, 6000);
+</script>
+</body>
+</html>

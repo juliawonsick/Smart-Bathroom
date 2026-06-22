@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBathroom – Cadastro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .container { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,.10); padding: 40px 36px; width: 100%; max-width: 440px; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .logo-icon { width: 44px; height: 44px; background: #1a3a8f; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; }
+  .logo-text { font-size: 20px; font-weight: 700; color: #1a3a8f; }
+  .logo-sub { font-size: 12px; color: #888; }
+  h2 { font-size: 22px; color: #1a2340; margin-bottom: 6px; }
+  p.sub { color: #666; font-size: 14px; margin-bottom: 24px; }
+  label { font-size: 13px; font-weight: 600; color: #444; display: block; margin-bottom: 5px; }
+  input { width: 100%; padding: 11px 14px; border: 1.5px solid #dde1ea; border-radius: 8px; font-size: 14px; outline: none; transition: border .2s; margin-bottom: 4px; }
+  input:focus { border-color: #2563eb; }
+  .hint { font-size: 11px; color: #888; margin-bottom: 14px; }
+  .hint.err-hint { color: #dc2626; }
+  .bathroom-options { display: flex; gap: 10px; margin-bottom: 18px; }
+  .bath-opt { flex: 1; border: 2px solid #dde1ea; border-radius: 10px; padding: 12px 10px; cursor: pointer; text-align: center; transition: all .2s; user-select: none; }
+  .bath-opt:hover { border-color: #2563eb; }
+  .bath-opt.selected-masc { border-color: #2563eb; background: #e8f0fe; }
+  .bath-opt.selected-fem  { border-color: #e91e8c; background: #fce4ec; }
+  .bath-opt .bath-icon { font-size: 28px; display: block; margin-bottom: 4px; }
+  .bath-opt .bath-label { font-size: 12px; font-weight: 700; color: #444; }
+  .btn { width: 100%; padding: 12px; background: #2563eb; color: #fff; font-size: 15px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: background .2s; margin-top: 6px; }
+  .btn:hover { background: #1a4fc7; }
+  .link-row { text-align: center; margin-top: 16px; font-size: 13px; color: #666; }
+  .link-row a { color: #2563eb; text-decoration: none; font-weight: 600; }
+  .error { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .success { background: #f0fdf4; color: #16a34a; border: 1px solid #86efac; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <div class="logo-icon">SB</div>
+    <div>
+      <div class="logo-text">SmartBathroom</div>
+      <div class="logo-sub">Cadastro de Aluno</div>
+    </div>
+  </div>
+  <h2>Criar conta</h2>
+  <p class="sub">Preencha com seus dados institucionais.</p>
+  <div class="error" id="err"></div>
+  <div class="success" id="ok"></div>
+
+  <label>Nome completo</label>
+  <input type="text" id="name" placeholder="Ex: João da Silva">
+  <div class="hint">Sem emojis.</div>
+
+  <label>RA</label>
+  <input type="text" id="ra" placeholder="7 dígitos — Ex: 1234567" maxlength="7" oninput="syncEmail()">
+  <div class="hint" id="ra-hint">Apenas 7 números.</div>
+
+  <label>Email institucional</label>
+  <input type="email" id="email" placeholder="Gerado automaticamente" readonly>
+  <div class="hint">Formato: RA@atitus.edu.br</div>
+
+  <label>Senha</label>
+  <input type="password" id="password" placeholder="Mínimo 8 caracteres">
+  <div class="hint">Sem emojis. Mínimo 8 caracteres.</div>
+
+  <label>Qual banheiro você utiliza?</label>
+  <div class="bathroom-options">
+    <div class="bath-opt" id="opt-masc" onclick="selectBath('Banheiro Bloco A - Masculino')">
+      <span class="bath-icon">🚹</span>
+      <span class="bath-label">Masculino</span>
+    </div>
+    <div class="bath-opt" id="opt-fem" onclick="selectBath('Banheiro Bloco A - Feminino')">
+      <span class="bath-icon">🚺</span>
+      <span class="bath-label">Feminino</span>
+    </div>
+  </div>
+
+  <button class="btn" onclick="doRegister()">Cadastrar</button>
+  <div class="link-row">Já tem conta? <a href="/login">Entrar</a></div>
+</div>
+<script>
+let selectedBathroom = '';
+
+function selectBath(value) {
+  selectedBathroom = value;
+  document.getElementById('opt-masc').className = 'bath-opt' + (value.includes('Masculino') ? ' selected-masc' : '');
+  document.getElementById('opt-fem').className  = 'bath-opt' + (value.includes('Feminino')  ? ' selected-fem'  : '');
+}
+
+function syncEmail() {
+  const ra = document.getElementById('ra').value.trim();
+  const emailEl = document.getElementById('email');
+  const hint = document.getElementById('ra-hint');
+  if (/^\d{7}$/.test(ra)) {
+    emailEl.value = ra + '@atitus.edu.br';
+    hint.textContent = '✓ RA válido';
+    hint.className = 'hint';
+    hint.style.color = '#16a34a';
+  } else {
+    emailEl.value = '';
+    hint.textContent = 'Apenas 7 números.';
+    hint.style.color = '#888';
+  }
+}
+
+function hasEmoji(str) {
+  return /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}]/u.test(str);
+}
+
+async function doRegister() {
+  const name = document.getElementById('name').value.trim();
+  const ra = document.getElementById('ra').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const err = document.getElementById('err');
+  const ok = document.getElementById('ok');
+  err.style.display = 'none';
+  ok.style.display = 'none';
+
+  if (!name || !ra || !email || !password) {
+    err.textContent = 'Preencha todos os campos.'; err.style.display = 'block'; return;
+  }
+  if (!selectedBathroom) {
+    err.textContent = 'Selecione qual banheiro você utiliza.'; err.style.display = 'block'; return;
+  }
+  if (hasEmoji(name) || hasEmoji(ra) || hasEmoji(email) || hasEmoji(password)) {
+    err.textContent = 'Emojis não são permitidos nos campos.'; err.style.display = 'block'; return;
+  }
+  if (!/^\d{7}$/.test(ra)) {
+    err.textContent = 'RA deve ter exatamente 7 números.'; err.style.display = 'block'; return;
+  }
+  if (password.length < 8) {
+    err.textContent = 'A senha deve ter pelo menos 8 caracteres.'; err.style.display = 'block'; return;
+  }
+
+  const res = await fetch('/cadastro', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, ra, email, password, bathroom: selectedBathroom}) });
+  const data = await res.json();
+  if (data.ok) {
+    ok.textContent = 'Conta criada com sucesso! Redirecionando...';
+    ok.style.display = 'block';
+    setTimeout(() => window.location.href = '/login', 1800);
+  } else {
+    err.textContent = data.msg;
+    err.style.display = 'block';
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+</script>
+</body>
+</html>
